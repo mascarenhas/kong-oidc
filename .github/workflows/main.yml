@@ -1,0 +1,24 @@
+name: release
+
+on: push
+
+jobs:
+  upload-plugin-image:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@master
+
+    - uses: leafo/gh-actions-lua@v5
+      with:
+        luaVersion: "5.1.5"
+
+    - uses: leafo/gh-actions-luarocks@v2
+
+    - name: build
+      run: |
+        cd build-image
+        ./build.sh
+        cat ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u mascarenhas --password-stdin
+        docker tag kong:2.0 docker.pkg.github.com/mascarenhas/kong-oidc/kong-oidc:2.0
+        docker push docker.pkg.github.com/mascarenhas/kong-oidc/kong-oidc:2.0
