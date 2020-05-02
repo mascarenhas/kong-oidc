@@ -19,6 +19,14 @@ jobs:
       run: |
         cd build-image
         ./build.sh
-        cat ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u mascarenhas --password-stdin
+    
+    - uses: azure/docker-login@v1
+      with:
+        login-server: docker.pkg.github.com
+        username: mascarenhas
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: push
+      run: |
         docker tag kong:2.0 docker.pkg.github.com/mascarenhas/kong-oidc/kong-oidc:2.0
         docker push docker.pkg.github.com/mascarenhas/kong-oidc/kong-oidc:2.0
