@@ -52,9 +52,9 @@ local platforms = {
       "apk update",
       "apk add git",
       "apk add zip",
+      "apk add curl",
     },
     target_commands = {       -- run before installing in the target image
-      "apk add curl",
     },
   }, {
     check = "yum --version",  -- check for CentOS
@@ -62,10 +62,10 @@ local platforms = {
       "yum -y install git",
       "yum -y install unzip",
       "yum -y install zip",
+      "yum -y install curl",
     },
     target_commands = {       -- run before installing in the target image
       "yum -y install unzip",
-      "yum -y install curl",
     },
   },
 }
