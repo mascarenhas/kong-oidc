@@ -97,13 +97,23 @@ function M.injectIDToken(idToken, headerName)
 end
 
 function M.injectUser(user, headerName)
-  ngx.log(ngx.DEBUG, "Injecting " .. headerName)
-  local tmp_user = user
-  tmp_user.id = user.sub
-  tmp_user.username = user.preferred_username
-  ngx.ctx.authenticated_credential = tmp_user
+  local email = user.email
+  local username = user.preferred_username or (email and email:match("^([^@]+)") or nil)
+  ngx.ctx.authenticated_credential = {
+    id = user.sub,
+    username = username
+  }
   local userinfo = cjson.encode(user)
+  ngx.log(ngx.DEBUG, "Injecting " .. headerName)
   ngx.req.set_header(headerName, ngx.encode_base64(userinfo))
+  ngx.log(ngx.DEBUG, "Injecting X-Forwarded-User")
+  ngx.req.set_header('X-Forwarded-User', username)
+  ngx.log(ngx.DEBUG, "Injecting X-Forwarded-Email")
+  ngx.req.set_header('X-Forwarded-Email', user.email)
+  if user.preferred_username then
+    ngx.log(ngx.DEBUG, "Injecting X-Forwarded-Preferred-Username")
+    ngx.req.set_header('X-Forwarded-Preferred-Username', user.preferred_username)
+  end
 end
 
 function M.injectGroups(user, claim)
@@ -114,13 +124,24 @@ end
 
 function M.has_bearer_access_token()
   local header = ngx.req.get_headers()['Authorization']
-  if header and header:find(" ") then
+  if header then
     local divider = header:find(' ')
-    if string.lower(header:sub(0, divider-1)) == string.lower("Bearer") then
+    if divider and string.lower(header:sub(0, divider-1)) == string.lower("Bearer") then
       return true
     end
   end
   return false
+end
+
+function M.get_access_token()
+  local header = ngx.req.get_headers()['Authorization']
+  if header then
+    local divider = header:find(' ')
+    if divider and string.lower(header:sub(0, divider-1)) == string.lower("Bearer") then
+      return string.sub(header, divider+1)
+    end
+  end
+  return nil
 end
 
 return M

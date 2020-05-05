@@ -26,32 +26,35 @@ function OidcHandler:access(config)
 end
 
 function handle(oidcConfig)
-  local response
+  local user, access_token, id_token
+  
   if oidcConfig.introspection_endpoint then
-    response = introspect(oidcConfig)
-    if response then
-      utils.injectUser(response, oidcConfig.userinfo_header_name)
-      utils.injectGroups(response, oidcConfig.groups_claim)
-    end
+    user = introspect(oidcConfig)
   end
 
-  if response == nil then
-    response = make_oidc(oidcConfig)
+  if user == nil then
+    local response = make_oidc(oidcConfig)
     if response then
-      if (not oidcConfig.disable_userinfo_header
-          and response.user) then
-        utils.injectUser(response.user, oidcConfig.userinfo_header_name)
-        utils.injectGroups(response.user, oidcConfig.groups_claim)
-      end
-      if (not oidcConfig.disable_access_token_header
-          and response.access_token) then
-        utils.injectAccessToken(response.access_token, oidcConfig.access_token_header_name, oidcConfig.access_token_as_bearer)
-      end
-      if (not oidcConfig.disable_id_token_header
-          and response.id_token) then
-        utils.injectIDToken(response.id_token, oidcConfig.id_token_header_name)
-      end
+      user = response.user
+      access_token = response.access_token
+      id_token = response.id_token
     end
+  else
+    access_token = utils.get_access_token()
+  end
+
+  if (not oidcConfig.disable_userinfo_header
+      and user) then
+    utils.injectUser(user, oidcConfig.userinfo_header_name)
+    utils.injectGroups(user, oidcConfig.groups_claim)
+  end
+  if (not oidcConfig.disable_access_token_header
+      and access_token) then
+    utils.injectAccessToken(access_token, oidcConfig.access_token_header_name, oidcConfig.access_token_as_bearer)
+  end
+  if (not oidcConfig.disable_id_token_header
+      and id_token) then
+    utils.injectIDToken(id_token, oidcConfig.id_token_header_name)
   end
 end
 

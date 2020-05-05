@@ -27,7 +27,7 @@ function TestIntrospect:test_access_token_exists()
     headers[h] = v
   end
 
-  self.handler:access({introspection_endpoint = "x", userinfo_header_name = "X-Userinfo"})
+  self.handler:access({introspection_endpoint = "x", access_token_header_name = 'X-Access-Token', userinfo_header_name = "X-Userinfo"})
   lu.assertTrue(self:log_contains("introspect succeeded"))
   lu.assertEquals(headers['X-Userinfo'], "eyJzdWIiOiJzdWIifQ==")
 end

@@ -37,6 +37,22 @@ function MockableCase:setUp()
     return {encode = function(...) return "encoded" end}
   end
 
+  package.loaded["resty.random"] = nil
+  package.preload["resty.random"] = function()
+    return {
+      bytes = function (n, format)
+        if format == 'hex' then
+          return '0x' .. str.rep('CC', n)
+        else
+          return string.rep('a', n)
+        end 
+      end,
+      number = function (a, b) return a or b or 42 end,
+      token = function (n) return str.rep('x', n) end
+    }
+  end
+
+
   self.cjson = package.loaded.cjson
   package.loaded.cjson = nil
   package.preload["cjson"] = function()

@@ -48,6 +48,50 @@ function TestHandler:test_authenticate_ok_with_userinfo()
   lu.assertEquals(headers['X-Userinfo'], "eyJzdWIiOiJzdWIifQ==")
 end
 
+function TestHandler:test_authenticate_ok_with_userinfo_and_forwarded_headers()
+  self.module_resty.openidc.authenticate = function(opts)
+    return {user = {sub = "sub", email = "user@example.com"}}, false
+  end
+  ngx.encode_base64 = function(x)
+    return "eyJzdWIiOiJzdWIifQ=="
+  end
+  
+  local headers = {}
+  ngx.req.set_header = function(h, v)
+    headers[h] = v
+  end
+
+  self.handler:access({userinfo_header_name = 'X-Userinfo'})
+  lu.assertTrue(self:log_contains("calling authenticate"))
+  lu.assertEquals(ngx.ctx.authenticated_credential.id, "sub")
+  lu.assertEquals(headers['X-Userinfo'], "eyJzdWIiOiJzdWIifQ==")
+  lu.assertEquals(headers['X-Forwarded-User'], 'user')
+  lu.assertEquals(headers['X-Forwarded-Email'], 'user@example.com')
+  lu.assertEquals(headers['X-Forwarded-Preferred-Username'], nil)
+end
+
+function TestHandler:test_authenticate_ok_with_userinfo_and_forwarded_headers_with_preferred_username()
+  self.module_resty.openidc.authenticate = function(opts)
+    return {user = {sub = "sub", preferred_username = "username", email = "user@example.com"}}, false
+  end
+  ngx.encode_base64 = function(x)
+    return "eyJzdWIiOiJzdWIifQ=="
+  end
+  
+  local headers = {}
+  ngx.req.set_header = function(h, v)
+    headers[h] = v
+  end
+
+  self.handler:access({userinfo_header_name = 'X-Userinfo'})
+  lu.assertTrue(self:log_contains("calling authenticate"))
+  lu.assertEquals(ngx.ctx.authenticated_credential.id, "sub")
+  lu.assertEquals(headers['X-Userinfo'], "eyJzdWIiOiJzdWIifQ==")
+  lu.assertEquals(headers['X-Forwarded-User'], 'username')
+  lu.assertEquals(headers['X-Forwarded-Email'], 'user@example.com')
+  lu.assertEquals(headers['X-Forwarded-Preferred-Username'], 'username')
+end
+
 function TestHandler:test_authenticate_ok_with_no_accesstoken()
   self.module_resty.openidc.authenticate = function(opts)
     return {}, true
@@ -148,7 +192,7 @@ function TestHandler:test_introspect_ok_no_userinfo()
   end
   ngx.req.get_headers = function() return {Authorization = "Bearer xxx"} end
 
-  self.handler:access({introspection_endpoint = "x"})
+  self.handler:access({introspection_endpoint = "x", access_token_header_name = "X-Access-Token"})
   lu.assertTrue(self:log_contains("introspect succeeded"))
 end
 
@@ -167,7 +211,7 @@ function TestHandler:test_introspect_ok_with_userinfo()
     headers[h] = v
   end
 
-  self.handler:access({introspection_endpoint = "x", userinfo_header_name = "X-Userinfo"})
+  self.handler:access({introspection_endpoint = "x", access_token_header_name = "X-Access-Token", userinfo_header_name = "X-Userinfo"})
   lu.assertTrue(self:log_contains("introspect succeeded"))
   lu.assertEquals(headers['X-Userinfo'], "eyJzdWIiOiJzdWIifQ==")
 end
@@ -186,7 +230,7 @@ function TestHandler:test_bearer_only_with_good_token()
   ngx.req.set_header = function(h, v)
     headers[h] = v
   end
-  self.handler:access({introspection_endpoint = "x", bearer_only = "yes", realm = "kong", userinfo_header_name = "X-Userinfo"})
+  self.handler:access({introspection_endpoint = "x", access_token_header_name = "X-Access-Token", bearer_only = "yes", realm = "kong", userinfo_header_name = "X-Userinfo"})
 
   lu.assertTrue(self:log_contains("introspect succeeded"))
   lu.assertEquals(headers['X-Userinfo'], "eyJzdWIiOiJzdWIifQ==")
