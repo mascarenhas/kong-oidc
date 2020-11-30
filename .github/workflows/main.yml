@@ -28,5 +28,5 @@ jobs:
 
     - name: push
       run: |
-        docker tag kong-oidc:2.1 docker.pkg.github.com/mascarenhas/kong-oidc/kong-oidc:2.1
-        docker push docker.pkg.github.com/mascarenhas/kong-oidc/kong-oidc:2.1
+        docker tag kong-oidc:2.2 docker.pkg.github.com/mascarenhas/kong-oidc/kong-oidc:2.2
+        docker push docker.pkg.github.com/mascarenhas/kong-oidc/kong-oidc:2.2
