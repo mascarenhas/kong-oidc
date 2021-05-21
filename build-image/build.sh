@@ -25,9 +25,9 @@ mv $PLUGIN_FOLDER/*.rock ./rocksdir/
 #build the custom image
 docker build \
    --build-arg "KONG_LICENSE_DATA=$KONG_LICENSE_DATA" \
-   --build-arg KONG_BASE="kong:2.3" \
+   --build-arg KONG_BASE="kong:2.4" \
    --build-arg PLUGINS="kong-oidc" \
    --build-arg ROCKS_DIR="./rocksdir" \
-   --tag "kong-oidc:2.3" .
+   --tag "kong-oidc:2.4" .
 
 
